@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Spinner, but not fidget</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.16.2/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    const config = {
+        type: Phaser.AUTO,
+        width: 600,
+        height: 320,
+        backgroundColor: '#F4F4F4',
+        physics: {
+            default: 'arcade'
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+
+    // Initiate game
+    const game = new Phaser.Game(config);
+
+
+    //Variables for onscreen elements
+    let btnStop
+    let btnStart
+    let col1
+    let col2
+    let col3
+    let colgroup
+
+    //Variables for controlling the thing
+    let accelerate
+    let decelerate
+    let spinning = false
+    let velocity
+
+    function preload ()
+    {
+        this.load.image("row", "assets/row.png");
+        this.load.image("btnStart", "assets/btnStart.png");
+        this.load.image("btnStop", "assets/btnStop.png");
+    }
+
+    function create () {
+
+        //Creating the onscreen elements
+        btnStart = this.add.image(500, 250, "btnStart");
+        btnStop = this.add.image(500, 50, "btnStop");
+        cols = this.physics.add.group()
+        colgroup = [col1, col2, col3]
+        for(let col in colgroup) {
+            colgroup[col] = cols.create(((+col+1)*100), 120, 'row')
+        }
+
+        //Black box around the "screen"
+        this.add.rectangle(0, 0, 400, 120, '#000000').setOrigin(0,0);
+        this.add.rectangle(0, 0, 50, 350, '#000000').setOrigin(0,0);
+        this.add.rectangle(350, 0, 50, 350, '#000000').setOrigin(0,0);
+        this.add.rectangle(0, 195, 400, 130, '#000000').setOrigin(0,0);
+
+        //Add interactiveness to the buttons
+        btnStart.setInteractive()
+        btnStop.setInteractive()
+        btnStart.on('pointerup', startSpin)
+        btnStop.on('pointerup', stopSpin)
+
+
+        //Function to start spinning
+        function startSpin () {
+            if (spinning === true) {
+                return
+            } else {
+                spinning = true
+                velocity = 1
+                accelerate = setInterval(() => {
+                    spinMore(velocity);
+                    velocity += 3
+                }, 10)
+                setTimeout(() => {
+                    if (spinning === true) {
+                        clearInterval(accelerate)
+                        stopSpin()
+                    }
+                }, 5000)
+            }
+        }
+
+        //Initiate slowdown and halt
+        function stopSpin () {
+            if (spinning === false) {
+                return
+            } else {
+                spinning = false
+                clearInterval(accelerate)
+                decelerate = setInterval(() => {spinLess(velocity); velocity -= 2}, 10)
+            }
+        }
+
+        //Function to enhance the speed of the columns
+        function spinMore (vel) {
+            for(let col in colgroup) {
+                let colVelocity = (+col+1)*vel
+                if (vel < 1000) {
+                    colgroup[col].setVelocityY(colVelocity)
+                }
+            }
+        }
+
+        //Function to slow down and then completely stop every column
+        function spinLess (vel) {
+            if(vel < 300) {
+                clearInterval(decelerate)
+                colgroup[0].setVelocityY(0)
+                colgroup[0].y = setPos(colgroup[0].y)
+                setTimeout(() => {
+                    colgroup[1].setVelocityY(0)
+                    colgroup[1].y = setPos(colgroup[1].y)
+                }, 1000)
+                setTimeout(() => {
+                    colgroup[2].setVelocityY(0)
+                    colgroup[2].y = setPos(colgroup[2].y)
+                }, 2000)
+            } else {
+                for(let col in colgroup) {
+                    let colVelocity = (+col+1)*vel
+                    colgroup[col].setVelocityY(colVelocity)
+                }
+            }
+        }
+
+        //Additional function to return the position of every nearby element, so that it wouldn't stop somewhere in between
+        function setPos (pos) {
+            if (pos <= 80) {
+                return 45
+            } else if (pos <= 155) {
+                return 120
+            } else if (pos <= 230) {
+                return 190
+            } else {
+                return 190
+            }
+        }
+    }
+
+    function update () {
+
+        //Functions to put every column to the top after getting too far back
+        if(colgroup[0].y > 250) {
+            colgroup[0].y = 31
+        }
+        if(colgroup[1].y > 250) {
+            colgroup[1].y = 31
+        }
+        if(colgroup[2].y > 250) {
+            colgroup[2].y = 31
+        }
+    }
+
+</script>
+
+</body>
+</html>
